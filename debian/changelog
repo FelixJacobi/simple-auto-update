@@ -1,3 +1,16 @@
+simple-auto-update (1.2.1) experimental; urgency=medium
+
+  [ Felix Jacobi ]
+  * Changed source format to native.
+  * Added debtags.
+  * Added support for built-in posthooks. 
+  * Added rpi-update posthook. 
+  * Fixed custom posthooks.
+
+  [ Stadtteilschule Blankenese ]
+
+ -- Stadtteilschule Blankenese <repository@stsbl.de>  Fri, 06 Jan 2017 08:28:44 +0100
+
 simple-auto-update (1.2.0) experimental; urgency=medium
 
   * Added support for post-update-hooks.
