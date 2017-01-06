@@ -1,0 +1,12 @@
+/var/log/simple-auto-update.log { 
+  daily
+  rotate 7
+  compress
+  delaycompress
+  missingok
+  notifempty
+  sharedscripts
+  postrotate
+    bash -c "touch /var/log/simple-auto-update.log; chown root:root /var/simple-auto-update.log; chmod 640 /var/log/simple-auto-update.log"
+  endscript
+}

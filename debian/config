@@ -1,0 +1,163 @@
+#!/bin/bash
+
+# Simple Auto Update Version 1.0
+# Copyright (C) 2016 Felix Jacobi
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+set -e
+
+# Source debconf library
+. /usr/share/debconf/confmodule
+
+PKG=simple-auto-update
+
+if [ "$1" = "reconfigure" ]; then
+  if [ "$DEBIAN_FRONTEND" != "noninteractive" ]; then
+    db_reset $PKG/enable-simple-auto-update || true
+    db_reset $PKG/full-upgrade || true
+    db_reset $PKG/install-new-config-files || true
+    db_reset $PKG/runhour || true
+    db_reset $PKG/runminute || true
+    db_reset $PKG/runday || true
+    db_reset $PKG/proxy || true
+    db_reset $PKG/anacron || true
+    db_go
+  fi
+
+  db_input critical $PKG/enable-simple-auto-update
+  db_go
+  db_get $PKG/enable-simple-auto-update
+  if [ "${RET}" = "true" ]; then
+    EnableSimpleAutoUpdate=yes
+  else
+    EnableSimpleAutoUpdate=no
+  fi
+  db_go
+
+  db_input critical $PKG/full-upgrade
+  db_go
+  db_get $PKG/full-upgrade
+  if [ "${RET}" = "true" ]; then
+    FullUpgrade=yes
+  else
+    FullUpgrade=no
+  fi
+  db_go
+
+  db_input critical $PKG/install-new-config-files
+  db_go
+  db_get $PKG/install-new-config-files
+  if [ "${RET}" = "true" ]; then
+    InstallNewConfigFiles=yes
+  else
+    InstallNewConfigFiles=no
+  fi
+  db_go
+
+  db_input critical $PKG/runhour
+  db_go
+  db_get $PKG/runhour
+  RunHour="${RET}"
+  db_go
+
+  db_input critical $PKG/runminute
+  db_go
+  db_get $PKG/runminute
+  RunMinute="${RET}"
+  db_go
+
+  db_input critical $PKG/runday
+  db_go
+  RunDay="${RET}"
+  db_go
+
+  db_input critical $PKG/proxy
+  db_go
+  db_get $PKG/proxy
+  Proxy="${RET}"
+  db_go
+
+  db_input critical $PKG/anacron
+  db_go
+  db_get $PKG/anacron
+  if [ "${RET}" = "true" ]; then
+    UseAnacron=yes
+  else
+    UseAnacron=no
+  fi
+  db_go
+
+  echo "Writing configuration file ..."
+  echo > /etc/simple-auto-update.conf
+  cat > /etc/simple-auto-update.conf << EOT
+# Sample configuration file for Simple Auto Update
+#
+# You can also use 'dpkg-reconfigure simple-auto-update' to change the configuration
+
+# If you want to disable Simple Auto Update, set this value to no.
+# If you want to enable it, set it to yes.
+#
+# Default Value: yes
+
+EnableSimpleAutoUpdate=$EnableSimpleAutoUpdate
+
+# Set the hour for running Simple Auto Update (0-24).
+#
+# Default Value: 4
+
+RunHour=$RunHour
+
+# Set the minute for running Simple Auto Update (0-59).
+#
+# Default Value: 0
+
+RunMinute=$RunMinute
+
+# Set the day for running Simple Auto Update (* = every day, 1 = Monday, 7 = Sunday)
+#
+# Default Value: *
+
+RunDay=*
+
+# If you want that Simple Auto Update to do a full upgrade set this to yes.
+# I not, set it to no.
+#
+# By default, Simple Auto Update does make a safe upgrade.
+#
+# Default Value: no
+
+FullUpgrade=$FullUpgrade
+
+# Set, if Simple Auto Update should keep the old configuration files of upgraded packages
+# or installs the new from the package maintainer.
+#
+# Default Value: no
+
+InstallNewConfigFiles=$InstallNewConfigFiles
+
+# Set the proxy which Simple Auto Updater should use.
+#
+# Leave this empty, if don't want to use a proxy.
+#
+# Default Value:
+
+Proxy=$Proxy
+
+# If you want to use anacron instead of cron, set this to yes.
+#
+# Default Value: no
+
+UseAnacron=$UseAnacron
+EOT
+fi

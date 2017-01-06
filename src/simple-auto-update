@@ -1,0 +1,232 @@
+#!/bin/bash
+
+# Simple Auto Update Version 1.0
+# Copyright (C) 2016 Felix Jacobi
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+# Cancel on errors
+set -e
+
+# Set shell and path, otherwhile dpkg will run to death
+export SHELL=/bin/bash
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Use default language
+export LC_ALL=C
+
+# Set log file
+export LOGFILE=/var/log/simple-auto-update.log
+
+# include common library
+source /usr/lib/simple-auto-update/common.sh
+
+# Simple Auto Update needs root rights
+if [ "$UID" != "0" ]; then
+  echo "Fatal error: Simple Auto Update requires root rights." >&2
+  echo >&2
+  echo "Try 'sudo simple-auto-update' to start it." >&2
+  exit 1
+fi
+
+# Functions
+
+# Print out short copyright
+function copyright {
+  echo
+  echo "Simple Auto Update Version 1.0"
+  echo "Copyright (C) 2017 Felix Jacobi"
+}
+
+# Print string if verbose mode is active and also write it to the log file.
+function printInVerboseMode {
+  DATE=$(date +"[%Y-%m-%d]")
+  OUTPUT=$(stringWithTime "$1")
+  if [ "$VerboseMode" = "true" ]; then
+    echo "$OUTPUT"
+  fi
+  echo "$DATE $OUTPUT" >> /var/log/simple-auto-update.log
+}
+
+# Exec a command and let printInVerboseMode handle his ouput
+function execCommand {
+  printInVerboseMode "Executing command '$1' ..."
+  printInVerboseMode
+  $1 2>&1 | while read LINE
+  do
+    printInVerboseMode "${LINE}"
+  done
+  printInVerboseMode
+  printInVerboseMode "Command '$1' finished."
+}
+
+# Main program
+
+# Set the default values
+ValidParam=false
+VerboseMode=false
+
+# Cancel if they are too much parameters
+if [ "$#" -gt 1 ]; then
+  copyright
+  printError
+  printError "Too much command line parameters ($# given, expected one), type"
+  printError
+  printError "  simple-auto-update --help"
+  printError
+  printError "for a list of valid parameters."
+  printError
+  exit 1
+fi
+
+# Print out license information in verbose mode
+if [ "$1" = "--verbose" ]; then
+  ValidParam=true
+  VerboseMode=true
+
+  copyright
+  echo
+  echo "This program comes with ABSOLUTELY NO WARRANTY; for details type 'simple-auto-update --license'."
+  echo "This is free software, and you are welcome to redistribute it"
+  echo "under certain conditions; type 'simple-auto-update --license' for details."
+  echo
+fi
+
+# Show license information
+if [ "$1" = "--license" ]; then
+  ValidParam=true
+
+  copyright
+  echo
+  echo "This program is free software: you can redistribute it and/or modify"
+  echo "it under the terms of the GNU General Public License as published by"
+  echo "the Free Software Foundation, either version 3 of the License, or"
+  echo "(at your option) any later version."
+  echo
+  echo "This program is distributed in the hope that it will be useful,"
+  echo "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+  echo "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+  echo "GNU General Public License for more details."
+  echo
+  echo "You should have received a copy of the GNU General Public License"
+  echo "along with this program.  If not, see <http://www.gnu.org/licenses/>"
+  echo
+  exit
+fi
+
+# Show help
+if [ "$1" = "--help" ]; then
+  ValidParam=true
+
+  copyright
+  echo
+  echo "This program comes with ABSOLUTELY NO WARRANTY; for details type 'simple-auto-update --license'."
+  echo "This is free software, and you are welcome to redistribute it"
+  echo "under certain conditions; type 'simple-auto-update --license' for details."
+  echo
+  echo "Usage: simple-auto-update [parameter]"
+  echo
+  echo "List of valid parameters:"
+  echo
+  echo "--verbose"
+  echo "  Print out the non-error ouptut of the program, by default it runs in non-verbose-mode."
+  echo
+  echo "--help"
+  echo "  Show this help."
+  echo
+  echo "--license"
+  echo "  Show information about the programs license."
+  echo
+  exit
+fi
+
+# No params are also valid
+if [ "$1" = "" ]; then
+  ValidParam=true
+fi
+
+if [ "$ValidParam" = "false" ]; then
+
+  copyright
+  printError
+  printError "Invalid command line parameter $1, type"
+  printError
+  printError "  simple-auto-update --help"
+  printError
+  printError "for a list of valid parameters."
+  printError
+  exit 1
+fi
+
+# Set Debconf Frontend to noninteractive
+export DEBIAN_FRONTEND=noninteractive
+
+printInVerboseMode "Starting Simple Auto Update ..."
+loadConfig
+
+# Creating log file, if it is missing
+if [ ! -e "$LOGFILE" ]; then
+  printInVerboseMode "Creating log file ..."
+  touch $LOGFILE
+  chown root:root $LOGFILE
+  chmod 640 $LOGFILE
+  printInVerboseMode "Log file created."
+fi
+
+if [ "$CONF_ENABLESIMPLEAUTOUPDATE" = "yes" ]; then
+  # Finish undone actions
+  execCommand "dpkg --configure -a"
+
+  UpdateArgs=""
+
+  # If a proxy is set, pass them to aptitude update
+  if [ "$CONF_PROXY" != "" ]; then
+    UpdateArgs="-o \"Acquire::http::Proxy=http://$CONF_PROXY\" -o \"Acquire::ftp::Proxy=http://$CONF_PROXY\""
+  fi
+
+  # Refreshing package list
+  execCommand "aptitude update $UpdateArgs"
+
+  if [ "$CONF_FULLUPGRADE" = "yes" ]; then
+    AptitudeCommand="full-upgrade"
+  else
+    AptitudeCommand="safe-upgrade"
+  fi
+
+  AptitudeArgs=""
+
+  # Set the installation of new configuration files to yes or no.
+  if [ "$InstallNewConfigFiles" = "yes" ]; then
+    AptitudeArgs="-o Dpkg::Options::=--force-confnew -o Dpkg::Options::=--force-confmiss"
+  else
+    AptitudeArgs="-o Dpkg::Options::=--force-confold -o Dpkg::Options::=--force-confmiss"
+  fi
+
+  # If a proxy is set, pass them to aptitude update
+  if [ "$CONF_PROXY" != "" ]; then
+    AptitudeArgs="$AptitudeArgs -o \"Acquire::http::Proxy=http://$CONF_PROXY\" -o \"Acquire::ftp::Proxy=http://$CONF_PROXY\""
+  fi
+
+  # Upgrade packages
+  execCommand "aptitude $AptitudeCommand --assume-yes $AptitudeArgs"
+  if [ -e "/etc/simple-auto-update.post.d/*" ]
+  then
+    printInVerboseMode "Running post update hooks ..."
+    execCommand "run-parts --report /etc/simple-auto-update.post.d/"
+  fi
+  printInVerboseMode "Simple Auto Update finished."
+  exit 0
+else
+  printInVerboseMode "Simple Auto Update is disabled in configuration. Exiting."
+  exit 0
+fi

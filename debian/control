@@ -1,0 +1,17 @@
+Source: simple-auto-update
+Section: utils
+Priority: extra
+Maintainer: Stadtteilschule Blankenese <repository@stsbl.de>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: https://it.stsbl.de/
+
+Package: simple-auto-update
+Architecture: all
+Depends: apt, aptitude, cron, bash (>= 4.2), logrotate, coreutils, debianutils
+Recommends: anacron
+Description: Simple Auto Update
+ Simple Auto Update is a simple package updater for Debian-based Distributions like Debian itself, Ubuntu and Rasbian (Raspberry Pi). 
+ It creates a cron job for cron and runs to a time which you can set.
+ .
+ Simple Auto Update is based on aptitude and cron.

@@ -1,0 +1,5 @@
+debian/simple-auto-update/*
+debian/simple-auto-update.debhelper.log
+debian/simple-auto-update.substvars
+debian/files
+debian/debhelper-build-stamp

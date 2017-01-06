@@ -1,0 +1,52 @@
+Template: simple-auto-update/enable-simple-auto-update
+Type: boolean
+Default: true
+Description: Do you want to enable Simple Auto Update?
+ If you enable Simple Auto Update, it will run onces a day and search and install updates via apt.
+
+Template: simple-auto-update/full-upgrade
+Type: boolean
+Default: false
+Description: Do full upgrades?
+ By default, Simple Auto Update excludes critical packages from upgrading.
+ .
+ But if you want to make full upgrades, you can set this to yes.
+
+Template: simple-auto-update/install-new-config-files
+Type: boolean
+Default: false
+Description: Install new configuration files automatically?
+ By default, Simple Auto Update will keep the old configuration files of an updated package, even if they is a new version by the vendor.
+ .
+ If you want always to install the new version of configuration files, you can set this to yes.
+
+Template: simple-auto-update/runhour
+Type: select
+Default: 4
+Choices: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 
+Description: Select the hour, when Simple Auto Update should run.
+
+Template: simple-auto-update/runminute
+Type: select
+Default: 0
+Choices: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59
+Description: Select the minute, when Simple Auto Update should run.
+
+Template: simple-auto-update/runday
+Type: select
+Default: *
+Choices: *, 1, 2, 3, 4, 5, 6, 7
+Description: Select the day, when Simple Auto Update should run.
+ (* = every day, 1 = Monday, 7 = Sunday)
+
+Template: simple-auto-update/proxy
+Type: string
+Default:
+Description: Specify the proxy which Simple Auto Update should use.
+ If do not want to use a proxy, leave this empty.
+
+Template: simple-auto-update/anacron
+Type: boolean
+Default: false
+Description: Link Simple Auto Update in anacron folder?
+ If your machine does not run all the time, it is recommended to link Simple Auto Update in the folder of anacron.
