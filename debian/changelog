@@ -1,3 +1,10 @@
+simple-auto-update (1.2.0) experimental; urgency=medium
+
+  * Added support for post-update-hooks.
+  * Added dependency on debianutils for run-parts. 
+
+ -- Stadtteilschule Blankenese <repository@stsbl.de>  Fri, 06 Jan 2017 08:00:27 +0100
+
 simple-auto-update (1.1.4) experimental; urgency=high
 
   * Fixed coreutils dependency. 
