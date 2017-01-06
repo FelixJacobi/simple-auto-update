@@ -4,3 +4,4 @@ src/common.sh usr/lib/simple-auto-update/
 logrotate/* etc/logrotate.d/
 config/* etc/
 debian/changelog DEBIAN/
+posthooks/* usr/lib/simple-auto-update/posthook.d/

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if [ -x "/usr/bin/rpi-update" ]
+then
+  /usr/bin/rpi-update
+fi

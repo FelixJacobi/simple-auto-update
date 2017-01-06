@@ -219,11 +219,15 @@ if [ "$CONF_ENABLESIMPLEAUTOUPDATE" = "yes" ]; then
 
   # Upgrade packages
   execCommand "aptitude $AptitudeCommand --assume-yes $AptitudeArgs"
-  if [ -e "/etc/simple-auto-update.post.d/*" ]
-  then
-    printInVerboseMode "Running post update hooks ..."
-    execCommand "run-parts --report /etc/simple-auto-update.post.d/"
-  fi
+  
+  # Run built-in post update hooks
+  printInVerboseMode "Running post update hooks ..."
+  execCommand "run-parts -v /usr/lib/simple-auto-update/posthook.d"
+
+  # Run custom post update hooks
+  printInVerboseMode "Running custom post update hooks ..."
+  execCommand "run-parts -v /etc/simple-auto-update.post.d"
+  
   printInVerboseMode "Simple Auto Update finished."
   exit 0
 else
